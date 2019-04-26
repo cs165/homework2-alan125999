@@ -9,9 +9,14 @@ const MATCH_LIST = {
   'THEIR': 'THERE',
   'THEY\'RE': 'THERE'
 };
-
 function transformTextNodes(node) {
   // TODO(you): Implement this function! See HW spec for details.
+  if (node.nodeType === Node.TEXT_NODE && node.nodeName !== 'STYLE' && node.nodeName !== 'SCRIPT') {
+    let words = node.textContent.split(/\s+/);
+    words = words.map(value => MATCH_LIST.hasOwnProperty(value) ? MATCH_LIST[value] : value)
+    node.textContent = words.join(' ');
+  }
+  node.childNodes.forEach(value => transformTextNodes(value));
 }
 
 transformTextNodes(document.body);
