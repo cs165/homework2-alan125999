@@ -63,8 +63,8 @@ function conclude() {
   const conclusionTitle = conclusion.querySelector('.conclusion-title');
   const conclusionContent = conclusion.querySelector('.conclusion-content');
   conclusion.classList.remove('hidden');
-  conclusionTitle.innerText = `You got: ${title}`;
-  conclusionContent.innerText = contents;
+  conclusionTitle.textContent = `You got: ${title}`;
+  conclusionContent.textContent = contents;
 }
 
 function restart() {
