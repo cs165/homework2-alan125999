@@ -14,9 +14,28 @@ const POSITIVE_MESSAGES = [
   'Your life matters.'
 ];
 
-chrome.runtime.onConnect.addListener(function(port) {
+const injectCSSRules = `
+  .tweet:hover {
+    background-image: url('${chrome.runtime.getURL('images/sparkle.gif')}');
+    opacity: 0.8;
+  }
+  .tweet *:hover {
+    cursor: url('${chrome.runtime.getURL('images/rose-cursor.gif')}') 4 12, auto;
+  }
+`;
+
+const CSSInjection = document.createElement('style');
+CSSInjection.textContent = injectCSSRules;
+
+chrome.runtime.onConnect.addListener(function (port) {
   port.onMessage.addListener(onMessage);
 });
+
+const state = {
+  isGardening: false,
+  lastTweetInjected: 0,
+  lastPageHeight: 0,
+}
 
 function onMessage(gardeningInProgress) {
   // TODO(you): Implement this function for extra credit! Add helper functions
@@ -26,4 +45,49 @@ function onMessage(gardeningInProgress) {
 
   // If `gardeningInProgress` is true, that means "Start Gardening" was clicked.
   // If `gardeningInProgress` is false, that means "Stop Gardening" was clicked.
+  const { isGardening } = state;
+  if (gardeningInProgress === true && isGardening === false) {
+    state.isGardening = true;
+    state.lastTweetInjected = 0;
+    state.lastPageHeight = 0;
+    document.head.appendChild(CSSInjection);
+    addOnClickEvent();
+    window.addEventListener('scroll', onScroll);
+  }
+  else if (gardeningInProgress === false && isGardening === true) {
+    state.isGardening = false;
+    document.head.removeChild(CSSInjection);
+    removeOnClickEvent();
+    window.removeEventListener('scroll', onScroll);
+  }
+
+}
+
+function onClick({ currentTarget: root }) {
+  event.stopPropagation();
+  root.querySelectorAll('.tweet-text').forEach(value => {
+    const index = Math.floor(Math.random() * POSITIVE_MESSAGES.length);
+    value.textContent = POSITIVE_MESSAGES[index];
+  });
+}
+
+function onScroll() {
+  const { lastPageHeight } = state;
+  const pageHeight = document.body.scrollHeight;
+  if (lastPageHeight >= pageHeight) return;
+  addOnClickEvent();
+  state.lastPageHeight = pageHeight;
+}
+
+function addOnClickEvent() {
+  const { lastTweetInjected } = state;
+  const allTweets = document.querySelectorAll('.tweet');
+  const newTweets = [...allTweets].slice(lastTweetInjected);
+  newTweets.forEach(value => value.addEventListener('click', onClick));
+  state.lastTweetInjected = allTweets.length;
+}
+
+function removeOnClickEvent() {
+  const allTweets = document.querySelectorAll('.tweet');
+  allTweets.forEach(value => value.removeEventListener('click', onClick));
 }
